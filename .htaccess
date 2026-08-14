@@ -1,13 +1,15 @@
 # Apache Configuration for Simple Blog Platform
+# Optimized for MAXIMUM PERFORMANCE - MediGuardian-style
 
 # Enable RewriteEngine
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /
     
-    # Redirect HTTP to HTTPS (optional, uncomment for production)
-    # RewriteCond %{HTTPS} off
-    # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+    # Force HTTPS in production
+    RewriteCond %{HTTPS} off
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
     
     # If file or directory exists, serve it directly
     RewriteCond %{REQUEST_FILENAME} !-f
@@ -17,23 +19,132 @@
     RewriteRule ^(.+)\.html$ $1.php [L,R=301]
 </IfModule>
 
-# Security Headers
-<IfModule mod_headers.c>
-    # Prevent clickjacking
-    Header set X-Frame-Options "SAMEORIGIN"
+# AGGRESSIVE COMPRESSION (like Node.js compression middleware)
+<IfModule mod_deflate.c>
+    # Compress HTML, CSS, JavaScript, Text, XML
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE image/svg+xml
     
-    # Prevent MIME type sniffing
-    Header set X-Content-Type-Options "nosniff"
-    
-    # Enable XSS protection
-    Header set X-XSS-Protection "1; mode=block"
-    
-    # Referrer policy
-    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    # Don't compress images (already compressed)
+    SetEnvIfNoCase Request_URI \.(?:gif|jpe?g|png|webp)$ no-gzip dont-vary
 </IfModule>
+
+# AGGRESSIVE BROWSER CACHING (1 year for static assets)
+<IfModule mod_expires.c>
+    ExpiresActive On
+    
+    # Images - 1 year (immutable)
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+    ExpiresByType image/vnd.microsoft.icon "access plus 1 year"
+    
+    # Fonts - 1 year (immutable)
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/ttf "access plus 1 year"
+    ExpiresByType font/opentype "access plus 1 year"
+    ExpiresByType application/font-woff "access plus 1 year"
+    ExpiresByType application/font-woff2 "access plus 1 year"
+    ExpiresByType application/x-font-ttf "access plus 1 year"
+    
+    # CSS and JavaScript - 1 year
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType application/x-javascript "access plus 1 year"
+    ExpiresByType text/javascript "access plus 1 year"
+    
+    # HTML - no cache (dynamic content)
+    ExpiresByType text/html "access plus 0 seconds"
+    
+    # JSON - no cache
+    ExpiresByType application/json "access plus 0 seconds"
+    
+    # Default - 1 week
+    ExpiresDefault "access plus 1 week"
+</IfModule>
+
+# Cache-Control headers (like Express.js static middleware)
+<IfModule mod_headers.c>
+    # Static assets - immutable, 1 year cache
+    <FilesMatch "\.(jpg|jpeg|png|gif|webp|svg|ico|pdf)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+    
+    <FilesMatch "\.(css|js|mjs|woff|woff2|ttf|eot|otf)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+    
+    # HTML - no cache
+    <FilesMatch "\.(html|htm|php)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </FilesMatch>
+    
+    # Security Headers (like Helmet.js)
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    
+    # Remove server signature (security)
+    Header unset Server
+    Header unset X-Powered-By
+    
+    # CORS for health check
+    <FilesMatch "health-check\.php$">
+        Header set Access-Control-Allow-Origin "*"
+    </FilesMatch>
+</IfModule>
+
+# Correct MIME types (prevent MIME confusion attacks)
+<IfModule mod_mime.c>
+    # JavaScript
+    AddType application/javascript js mjs
+    AddType application/json json
+    AddCharset UTF-8 .js .mjs .json
+    
+    # Fonts
+    AddType font/woff2 woff2
+    AddType font/woff woff
+    AddType font/ttf ttf
+    AddType font/opentype otf
+    
+    # Images
+    AddType image/svg+xml svg svgz
+    AddType image/webp webp
+    
+    # Text files
+    AddCharset UTF-8 .html .css .xml .rss .atom .txt
+</IfModule>
+
+# Disable ETags (we use Cache-Control)
+<IfModule mod_headers.c>
+    Header unset ETag
+</IfModule>
+FileETag None
 
 # Prevent directory listing
 Options -Indexes
+
+# Follow symbolic links
+Options +FollowSymLinks
 
 # Protect sensitive files
 <FilesMatch "^\.">
@@ -42,7 +153,7 @@ Options -Indexes
 </FilesMatch>
 
 # Protect environment files
-<FilesMatch "\.(env|env\.example)$">
+<FilesMatch "\.(env|env\.example|gitignore|dockerignore)$">
     Order allow,deny
     Deny from all
 </FilesMatch>
@@ -50,19 +161,14 @@ Options -Indexes
 # Set default charset
 AddDefaultCharset UTF-8
 
-# Enable compression
-<IfModule mod_deflate.c>
-    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
-</IfModule>
+# Custom error pages
+ErrorDocument 404 /index.php
+ErrorDocument 500 /index.php
 
-# Browser caching
-<IfModule mod_expires.c>
-    ExpiresActive On
-    ExpiresByType image/jpg "access plus 1 year"
-    ExpiresByType image/jpeg "access plus 1 year"
-    ExpiresByType image/gif "access plus 1 year"
-    ExpiresByType image/png "access plus 1 year"
-    ExpiresByType text/css "access plus 1 month"
-    ExpiresByType application/javascript "access plus 1 month"
-    ExpiresByType application/x-javascript "access plus 1 month"
+# Increase PHP limits (if mod_php is available)
+<IfModule mod_php.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+    php_value max_execution_time 60
+    php_value max_input_time 60
 </IfModule>

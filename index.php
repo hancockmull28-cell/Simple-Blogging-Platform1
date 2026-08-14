@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple Blog Platform</title>
+    
+    <!-- Preconnect to external domains for faster loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://code.jquery.com">
+    
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Bootstrap CSS -->
@@ -12,6 +20,15 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/style.css">
+    
+    <!-- Inline critical CSS for instant First Contentful Paint -->
+    <style>
+        body{margin:0;padding:0;font-family:Inter,sans-serif;transition:none!important}
+        .navbar{background:#0f766e!important;padding:1rem 0}
+        .container{max-width:1140px;margin:0 auto;padding:0 15px}
+        .skeleton{animation:pulse 1.5s ease-in-out infinite}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+    </style>
 </head>
 <body>
     <!-- Reading Progress Bar -->
@@ -196,11 +213,28 @@
         </div>
     </footer>
 
-    <!-- jQuery, Popper.js, and Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js"></script>
+    <!-- jQuery, Popper.js, and Bootstrap JS - Async loading for better performance -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" defer></script>
     <!-- Custom JS -->
-    <script src="assets/js/script.js"></script>
+    <script src="assets/js/script.js" defer></script>
+    
+    <!-- Performance monitoring -->
+    <script>
+        // Measure and log First Contentful Paint
+        if ('PerformanceObserver' in window) {
+            try {
+                const observer = new PerformanceObserver((list) => {
+                    for (const entry of list.getEntries()) {
+                        if (entry.name === 'first-contentful-paint') {
+                            console.log('✅ FCP:', entry.startTime.toFixed(2), 'ms');
+                        }
+                    }
+                });
+                observer.observe({ entryTypes: ['paint'] });
+            } catch(e) {}
+        }
+    </script>
 </body>
 </html>
