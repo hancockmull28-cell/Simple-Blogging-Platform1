@@ -1,0 +1,45 @@
+name: Keep Website Alive
+
+# Run every 14 minutes during active hours (to avoid GitHub Actions limits)
+on:
+  schedule:
+    # Runs every 14 minutes from 6 AM to 11 PM UTC (18 hours)
+    - cron: '*/14 6-23 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Ping Website
+        run: |
+          echo "🏃 Pinging website to keep it active..."
+          
+          # Your website URL
+          WEBSITE_URL="https://simple-blogging-platform-iakn.onrender.com"
+          
+          # Ping the main page
+          response=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$WEBSITE_URL")
+          
+          if [ "$response" = "200" ]; then
+            echo "✅ Website is alive! Status: $response"
+          else
+            echo "⚠️ Website responded with status: $response"
+          fi
+          
+          # Also ping health check endpoint
+          health_response=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$WEBSITE_URL/health-check.php")
+          
+          if [ "$health_response" = "200" ]; then
+            echo "✅ Health check passed! Status: $health_response"
+          else
+            echo "⚠️ Health check status: $health_response"
+          fi
+          
+          echo "⏰ Ping completed at $(date)"
+
+      - name: Log Activity
+        run: |
+          echo "Keep-alive ping executed successfully"
+          echo "Next ping scheduled in 14 minutes"
