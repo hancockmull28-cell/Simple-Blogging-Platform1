@@ -1,10 +1,10 @@
 name: Keep Website Alive
 
-# Run every 14 minutes, 24/7 (stays under GitHub Actions limits)
+# Run every 5 minutes, 24/7 for maximum uptime
 on:
   schedule:
-    # Runs every 14 minutes, all day, every day (24/7 uptime)
-    - cron: '*/14 * * * *'
+    # Runs every 5 minutes, all day, every day
+    - cron: '*/5 * * * *'
   workflow_dispatch: # Allow manual trigger
 
 jobs:
