@@ -29,7 +29,7 @@ jobs:
           fi
           
           # Also ping health check endpoint
-          health_response=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$WEBSITE_URL/health-check.php")
+          health_response=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$WEBSITE_URL/health_check.php")
           
           if [ "$health_response" = "200" ]; then
             echo "✅ Health check passed! Status: $health_response"
